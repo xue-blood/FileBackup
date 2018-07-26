@@ -11,6 +11,10 @@ FileBackup tool, customing by commandline
     * `--debug` debug flag to show message
     * `--replace` replace the exisit file in target dir
 
+* Drag folder which you want to backup to `backup.cmd`
+
+* Drag folder which you want to restore to `restore.cmd`
+
 #  使用方法
 * 编辑 `restore.cmd` 和 `backup.cmd` 两个文件
     * `--from` 程序从该目录复制文件
@@ -20,3 +24,7 @@ FileBackup tool, customing by commandline
     * `--rename` 重命令文件
     * `--debug` 调试开关
     * `--replace` 替换目标路径中己有的文件
+
+* 拖拽要备份的文件夹到 `backup.cmd`
+
+* 拖拽要恢复的文件夹到 `restore.cmd`
