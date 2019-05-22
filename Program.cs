@@ -9,37 +9,52 @@ using Command;
 namespace FileBackup {
     class Program {
         static void Main ( string[] args ) {
-            run.Method.Run<string> (args);
+            //run.Method.Run<string> (args);
+            typeof(Program).GetMethod("Run").Run<string>(args);
         }
 
-        static Func<string, string, List<string>, List<string>, string, string, string, string> run = Run;
+        //static Func<string, string, List<string>, List<string>, string, string, string, string> run = Run;
         [Cmd]
-        public static string Run ( string from, string to, List<string> include, List<string> exclude, string rename,
+        public static string Run([CmdParam(defaultValue = ".")]string from, string to,
+            List<string> include, List<string> exclude,
+            List<string> rename, List<string> remove,
             [CmdParam (isswitch = true)]string replace,
             [CmdParam (isswitch = true)]string debug ) {
 
             try {
                 foreach (var p in Directory.GetFiles (from, "*.*", SearchOption.AllDirectories)) {
-                    // 是否被包含
+                    // is exclude
+                    for (int i = 0; exclude != null && i<exclude.Count; i++) { if (p.IndexOf (exclude[i]) != -1) goto __next__; }
+                    // is include
                     bool need = false;
                     for (int i = 0; include != null && i<include.Count; i++) { if (p.IndexOf (include[i]) != -1) { need = true; break; } }
                     if (!need) { goto __next__; }
-                    for (int i = 0; exclude != null && i<exclude.Count; i++) { if (p.IndexOf (exclude[i]) != -1) goto __next__; }
 
-                    var np = p.Substring (from.Length + 1, p.Length - from.Length - 1);
-                    if (rename != null && rename.Length == 2) { np = np.Replace (rename[0], rename[1]); }
-                    np = Path.Combine (to, np);
+                    // new name
+                    var npb = new StringBuilder(p.Substring (from.Length + 1, p.Length - from.Length - 1));
+                    
+                    // need remove 
+                    for (int i=0; remove != null && i < remove.Count; i++) { npb.Replace(remove[i], ""); }
+                    // need rename file
+                    for (int i=0; rename != null && i < rename.Count; i++) {
+                        if (rename[i].Length == 2)
+                            npb.Replace(rename[i][0], rename[i][1]); // just one character
+                        else
+                            npb.Replace(rename[i].Split(':')[0], rename[i].Split(':')[1]); // string replace
+                    }
+
+                    string np = Path.Combine(to, npb.ToString());
                     var nd = Path.GetDirectoryName (np);
                     Directory.CreateDirectory (nd);
 
                     if (File.Exists (np)) {
-                        if (replace != null) { if (debug != null) { "Delete {0}".log (np); }; File.Delete (np); }
+                        if (replace != null) { if (debug != null) { "Delete {0}".loge (np); }; File.Delete (np); }
                         else { goto __next__; }
                     }
 
                     File.Copy (p, np);
 
-                    if (debug != null) { "Copy {0} \n\t{1}".log (p, np); };
+                    if (debug != null) { "Copy {0} \n\t{1}".logw (p, np); };
                     continue;
                     __next__:
                     if (debug != null) { "Skip {0}".log (p); };
