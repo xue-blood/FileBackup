@@ -13,6 +13,8 @@ namespace FileBackup {
             typeof(Program).GetMethod("Run").Run<string>(args);
         }
 
+        static ExProcess exp = new ExProcess();
+
         //static Func<string, string, List<string>, List<string>, string, string, string, string> run = Run;
         [Cmd]
         public static string Run([CmdParam(defaultValue = ".")]string from, string to,
@@ -22,28 +24,18 @@ namespace FileBackup {
             [CmdParam (isswitch = true)]string debug ) {
 
             try {
-                foreach (var p in Directory.GetFiles (from, "*.*", SearchOption.AllDirectories)) {
-                    // is exclude
-                    for (int i = 0; exclude != null && i<exclude.Count; i++) { if (p.IndexOf (exclude[i]) != -1) goto __next__; }
-                    // is include
-                    bool need = false;
-                    for (int i = 0; include != null && i<include.Count; i++) { if (p.IndexOf (include[i]) != -1) { need = true; break; } }
-                    if (!need) { goto __next__; }
-
-                    // new name
-                    var npb = new StringBuilder(p.Substring (from.Length + 1, p.Length - from.Length - 1));
+                foreach (var p in Directory.GetFiles(from, "*.*", SearchOption.AllDirectories)) {
+                    exp.init(p, from);
+                    if (exp.isexclude(p, exclude)) goto __next__;
+                    if (!exp.isinclude(p, include)) goto __next__;
                     
-                    // need remove 
-                    for (int i=0; remove != null && i < remove.Count; i++) { npb.Replace(remove[i], ""); }
-                    // need rename file
-                    for (int i=0; rename != null && i < rename.Count; i++) {
-                        if (rename[i].Length == 2)
-                            npb.Replace(rename[i][0], rename[i][1]); // just one character
-                        else
-                            npb.Replace(rename[i].Split(':')[0], rename[i].Split(':')[1]); // string replace
-                    }
+                    // new name
+                    var np = p.Substring (from.Length + 1, p.Length - from.Length - 1);
 
-                    string np = Path.Combine(to, npb.ToString());
+                    np = exp.remove(np, remove);
+                    np = exp.rename(np, rename);
+
+                    np = Path.Combine(to, np);
                     var nd = Path.GetDirectoryName (np);
                     Directory.CreateDirectory (nd);
 

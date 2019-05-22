@@ -380,5 +380,43 @@ public static class StringExtension {
         else if (padding != '\0') { return value.PadLeft (length - value.Length, padding); }
         return value;
     }
+    #region Math
+    /// <summary>
+    /// {a} ">1"
+    /// </summary>
+    public static bool math(this int a, string data)
+    {
+        int io = 0;
+        string symbol = null;
+        if (data[1] == '=')
+        {
+            symbol = data.Substring(0, 2);
+            io = data.Substring(2, data.Length - 2).toInt();
+        }
+        else
+        {
+            symbol = data.Substring(0, 1);
+            io = data.Substring(1, data.Length - 1).toInt();
+        }
+        switch (symbol)
+        {
+            case "=": return a == io;
+            case ">": return a > io;
+            case "<": return a < io;
+            case "!=": return a != io;
+            case ">=": return a >= io;
+            case "<=": return a <= io;
+            default: "Unsupport symbol: {0}{1}".loge(a, symbol); return false;
+        }
+    }
+    public static bool math(this string a, string data){
+        if (data.StartsWith("="))
+            return a == data.Remove(0, 1);
+        else if (data.StartsWith("!="))
+            return a != data.Remove(0, 2);
+        else
+            "Unsupport symbol: {0}{1}".loge(a, data); return false;
+    }
+    #endregion
 }
 
