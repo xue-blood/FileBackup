@@ -16,6 +16,8 @@ namespace FileBackup
         bool isinclude(string path, List<string> patten);
         string remove(string path, List<string> patten);
         string rename(string path, List<string> patten);
+        string outdir(string path, int passcount);
+        void init_split(string split, int total, string format);
         void init(string path, string root);
     }
 
@@ -54,6 +56,58 @@ namespace FileBackup
             }
             return false;
 
+        }
+        int totalcount = 0;
+        int splitcount = 0;
+        string splitformat = "_{p}";
+        string splitformat_count = "{c}", splitformat_count1 = "{count}"; // 当前个数
+        string splitformat_piece = "{p}", splitformat_piece1 = "{piece}"; // 当前块数
+        string splitformat_piece_s = "{s}", splitformat_piece_start = "{start}"; // 当前块开始数
+        string splitformat_piece_e = "{e}", splitformat_piece_end = "{end}";     // 当前块结束数
+        string splitformat_piece_t = "{t}", splitformat_piece_total = "{total}"; // 总数
+        public void init_split(string split, int total, string format)
+        {
+            if (format.valid())
+                splitformat = format;
+            if (!split.valid())
+            {
+                splitcount = 0;
+                return;
+            }
+            var ss = split.Split('/'); // 1 / 5,  or 5
+            if (ss.Length == 1)
+                splitcount = int.Parse(ss[0]);
+            else
+                splitcount = total * int.Parse(ss[0]) / int.Parse(ss[1]);
+            if(splitcount == total)
+                splitcount = 0;
+            totalcount = total;
+        }
+
+        public string outdir(string path, int passcount)
+        {
+            if (splitcount <= 0) return path;
+            StringBuilder sbd = new StringBuilder(splitformat);
+
+            sbd.Replace(splitformat_count, passcount.ToString());
+            sbd.Replace(splitformat_count1, passcount.ToString());
+
+            int piece = passcount / splitcount;
+
+            sbd.Replace(splitformat_piece, piece.ToString());
+            sbd.Replace(splitformat_piece1, piece.ToString());
+
+            sbd.Replace(splitformat_piece_s, (piece * splitcount).ToString());
+            sbd.Replace(splitformat_piece_start, (piece * splitcount).ToString());
+
+            sbd.Replace(splitformat_piece_e, (piece * splitcount + splitcount - 1).ToString());
+            sbd.Replace(splitformat_piece_end, (piece * splitcount + splitcount - 1).ToString());
+
+            sbd.Replace(splitformat_piece_t, totalcount.ToString());
+            sbd.Replace(splitformat_piece_total, totalcount.ToString());
+
+            //return path + "_" + piece;
+            return path + sbd.ToString();
         }
 
         public string remove(string path, List<string> patten) {
